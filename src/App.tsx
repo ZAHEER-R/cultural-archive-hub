@@ -12,6 +12,7 @@ import SettingsPage from "./pages/SettingsPage";
 import CityDetail from "./pages/CityDetail";
 import MapPage from "./pages/MapPage";
 import NotFound from "./pages/NotFound";
+import ConsentAlerts from "@/components/CookieConsent";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
+          <ConsentAlerts />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

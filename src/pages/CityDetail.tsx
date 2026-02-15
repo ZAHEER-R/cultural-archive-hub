@@ -1,8 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, MapPin, Users, Languages, Star, Heart, Share2, CheckCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Languages, Star, Heart, Share2, CheckCircle, Camera, MessageSquare, Image } from "lucide-react";
 import { cities } from "@/data/cities";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 function getCityImage(imageKey: string): string {
   const modules = import.meta.glob("@/assets/*.jpg", { eager: true }) as Record<string, { default: string }>;
@@ -13,11 +14,20 @@ function getCityImage(imageKey: string): string {
   return "";
 }
 
+// Sample review data
+const sampleReviews = [
+  { id: 1, user: "Sarah M.", avatar: "S", text: "An absolutely magical experience visiting during the festival season. The colors, sounds, and energy were unforgettable!", rating: 5, likes: 24, date: "2 weeks ago" },
+  { id: 2, user: "Marco R.", avatar: "M", text: "The local food was incredible. Every street corner had something new to try. The cultural heritage sites were well preserved.", rating: 4, likes: 18, date: "1 month ago" },
+  { id: 3, user: "Aisha K.", avatar: "A", text: "I learned so much about the traditions here. The guides were knowledgeable and passionate about their heritage.", rating: 5, likes: 31, date: "3 weeks ago" },
+];
+
 export default function CityDetail() {
   const { id } = useParams();
   const city = cities.find(c => c.id === id);
   const [liked, setLiked] = useState(false);
-  const [activeTab, setActiveTab] = useState<"cultures" | "reviews">("cultures");
+  const [activeTab, setActiveTab] = useState<"cultures" | "reviews" | "photos" | "info">("cultures");
+  const [likedReviews, setLikedReviews] = useState<number[]>([]);
+  const { toast } = useToast();
 
   if (!city) {
     return (
@@ -29,6 +39,31 @@ export default function CityDetail() {
       </div>
     );
   }
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${city.name} - CultureVault`, url });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Share this page with friends." });
+    }
+  };
+
+  const toggleReviewLike = (reviewId: number) => {
+    setLikedReviews(prev =>
+      prev.includes(reviewId) ? prev.filter(id => id !== reviewId) : [...prev, reviewId]
+    );
+  };
+
+  const tabs = [
+    { key: "cultures", label: `Cultures (${city.cultures.length})` },
+    { key: "info", label: "Info & Places" },
+    { key: "photos", label: "Photos & Videos" },
+    { key: "reviews", label: "Experiences" },
+  ] as const;
 
   return (
     <div className="pb-20 md:pb-0">
@@ -63,7 +98,7 @@ export default function CityDetail() {
             <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
             <span className="text-sm">{liked ? "Liked" : "Like"}</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-full border hover:bg-secondary transition-colors">
+          <button onClick={handleShare} className="flex items-center gap-2 px-4 py-2 rounded-full border hover:bg-secondary transition-colors">
             <Share2 className="w-4 h-4" />
             <span className="text-sm">Share</span>
           </button>
@@ -75,21 +110,19 @@ export default function CityDetail() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b">
-          <button
-            onClick={() => setActiveTab("cultures")}
-            className={`pb-3 text-sm font-medium transition-colors ${activeTab === "cultures" ? "border-b-2 border-accent text-accent" : "text-muted-foreground"}`}
-          >
-            Cultures & Traditions ({city.cultures.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("reviews")}
-            className={`pb-3 text-sm font-medium transition-colors ${activeTab === "reviews" ? "border-b-2 border-accent text-accent" : "text-muted-foreground"}`}
-          >
-            Experiences & Reviews
-          </button>
+        <div className="flex gap-4 mb-8 border-b overflow-x-auto">
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`pb-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.key ? "border-b-2 border-accent text-accent" : "text-muted-foreground"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
+        {/* Cultures Tab */}
         {activeTab === "cultures" && (
           <div className="grid gap-4 md:grid-cols-2">
             {city.cultures.map((culture, i) => (
@@ -123,13 +156,159 @@ export default function CityDetail() {
           </div>
         )}
 
+        {/* Info & Places Tab */}
+        {activeTab === "info" && (
+          <div className="grid gap-6 md:grid-cols-2">
+            {city.touristPlaces && city.touristPlaces.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-accent" /> Tourist Places
+                </h3>
+                <ul className="space-y-2">
+                  {city.touristPlaces.map((place, i) => (
+                    <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                      {place}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {city.famousFood && city.famousFood.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3">🍽 Famous Food</h3>
+                <div className="flex flex-wrap gap-2">
+                  {city.famousFood.map((food, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full bg-accent/10 text-accent text-sm">{food}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {city.famousRestaurants && city.famousRestaurants.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3">🏪 Famous Restaurants</h3>
+                <ul className="space-y-2">
+                  {city.famousRestaurants.map((r, i) => (
+                    <li key={i} className="text-sm text-muted-foreground">{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {city.beaches && city.beaches.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3">🏖 Beaches</h3>
+                <div className="flex flex-wrap gap-2">
+                  {city.beaches.map((b, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm">{b}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {city.rivers && city.rivers.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3">🌊 Rivers & Water Bodies</h3>
+                <div className="flex flex-wrap gap-2">
+                  {city.rivers.map((r, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm">{r}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {city.parks && city.parks.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3">🌳 Parks</h3>
+                <div className="flex flex-wrap gap-2">
+                  {city.parks.map((p, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm">{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {city.malls && city.malls.length > 0 && (
+              <div className="p-6 rounded-xl bg-card border">
+                <h3 className="font-heading font-semibold text-lg mb-3">🛍 Shopping Malls</h3>
+                <div className="flex flex-wrap gap-2">
+                  {city.malls.map((m, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-sm">{m}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Photos & Videos Tab */}
+        {activeTab === "photos" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-secondary flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-xs">Photo {i}</p>
+                    <p className="text-[10px] opacity-50">{city.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[1, 2].map(i => (
+                <div key={i} className="aspect-video rounded-xl overflow-hidden bg-secondary flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <Image className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-xs">Video {i} — {city.name}</p>
+                    <p className="text-[10px] opacity-50">Coming soon</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Sign in to upload your own photos and videos of {city.name}
+            </p>
+          </div>
+        )}
+
+        {/* Reviews Tab */}
         {activeTab === "reviews" && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="font-heading text-lg mb-2">Share Your Experience</p>
-            <p className="text-sm mb-4">Sign in to share photos, videos, and stories about this place</p>
-            <Link to="/auth" className="inline-block px-6 py-2 rounded-full bg-gradient-gold text-sm font-medium" style={{ color: "hsl(20 25% 10%)" }}>
-              Sign In to Review
-            </Link>
+          <div className="space-y-6">
+            {sampleReviews.map(review => (
+              <motion.div
+                key={review.id}
+                className="p-6 rounded-xl bg-card border"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold">
+                    {review.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{review.user}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < review.rating ? "fill-gold text-gold" : "text-muted"}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-muted-foreground">{review.date}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">{review.text}</p>
+                <button
+                  onClick={() => toggleReviewLike(review.id)}
+                  className={`flex items-center gap-1 text-sm transition-colors ${likedReviews.includes(review.id) ? "text-red-500" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Heart className={`w-4 h-4 ${likedReviews.includes(review.id) ? "fill-current" : ""}`} />
+                  <span>{review.likes + (likedReviews.includes(review.id) ? 1 : 0)}</span>
+                </button>
+              </motion.div>
+            ))}
+            <div className="text-center py-6">
+              <Link to="/auth" className="inline-block px-6 py-2 rounded-full bg-gradient-gold text-sm font-medium" style={{ color: "hsl(20 25% 10%)" }}>
+                Sign In to Share Your Experience
+              </Link>
+            </div>
           </div>
         )}
       </div>
