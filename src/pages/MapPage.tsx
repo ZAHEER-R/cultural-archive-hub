@@ -1,8 +1,7 @@
-import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
-import { cities } from "@/data/cities";
+import { cities, continentColors, getContinentForRegion } from "@/data/cities";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,18 +13,46 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const goldIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const colorMarkers: Record<string, L.Icon> = {};
+const markerColors: Record<string, string> = {
+  "Asia": "red",
+  "Europe": "blue",
+  "Africa": "orange",
+  "North America": "green",
+  "South America": "violet",
+  "Oceania": "gold",
+};
+
+Object.entries(markerColors).forEach(([continent, color]) => {
+  colorMarkers[continent] = new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
 });
+
+function getMarkerIcon(region: string): L.Icon {
+  const continent = getContinentForRegion(region);
+  return colorMarkers[continent] || colorMarkers["Asia"];
+}
 
 export default function MapPage() {
   return (
     <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] pb-16 md:pb-0">
+      {/* Legend */}
+      <div className="absolute top-20 right-4 z-[1000] bg-card/90 backdrop-blur-sm rounded-xl border p-3 shadow-lg">
+        <p className="text-xs font-medium mb-2">Continents</p>
+        {Object.entries(markerColors).map(([continent, color]) => (
+          <div key={continent} className="flex items-center gap-2 text-xs mb-1">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: continentColors[continent] }} />
+            <span>{continent}</span>
+          </div>
+        ))}
+      </div>
+
       <MapContainer
         center={[20, 0]}
         zoom={2}
@@ -35,10 +62,10 @@ export default function MapPage() {
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         {cities.map(city => (
-          <Marker key={city.id} position={[city.lat, city.lng]} icon={goldIcon}>
+          <Marker key={city.id} position={[city.lat, city.lng]} icon={getMarkerIcon(city.region)}>
             <Popup>
               <div className="font-body text-center min-w-[150px]">
                 <p className="font-heading font-bold text-base mb-1">{city.name}</p>

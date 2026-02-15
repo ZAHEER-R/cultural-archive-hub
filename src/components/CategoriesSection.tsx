@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BookOpen, Music, Palette, Heart, Utensils, Landmark, Shirt, Leaf } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const items = [
   { icon: BookOpen, label: "Folk Stories", color: "from-amber-500/20 to-orange-500/20" },
@@ -13,6 +14,15 @@ const items = [
 ];
 
 export default function CategoriesSection() {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (label: string) => {
+    navigate(`/?category=${encodeURIComponent(label)}`);
+    setTimeout(() => {
+      document.getElementById("cultures")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
   return (
     <section id="about" className="py-20 bg-gradient-earth">
       <div className="container mx-auto px-4">
@@ -26,15 +36,16 @@ export default function CategoriesSection() {
             Intangible Cultural Heritage
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Globally recognized and protected by UNESCO
+            Globally recognized and protected by UNESCO — click to explore
           </p>
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
           {items.map((item, i) => (
-            <motion.div
+            <motion.button
               key={i}
-              className={`group p-6 rounded-xl bg-gradient-to-br ${item.color} border cursor-pointer transition-all duration-300 hover:shadow-gold hover:-translate-y-1`}
+              onClick={() => handleCategoryClick(item.label)}
+              className={`group p-6 rounded-xl bg-gradient-to-br ${item.color} border cursor-pointer transition-all duration-300 hover:shadow-gold hover:-translate-y-1 text-left`}
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -44,7 +55,7 @@ export default function CategoriesSection() {
             >
               <item.icon className="w-8 h-8 mb-3 text-accent group-hover:scale-110 transition-transform" />
               <p className="font-medium text-sm">{item.label}</p>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
       </div>

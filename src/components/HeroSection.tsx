@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { ChevronDown, Globe, BookOpen, Shield } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import { Suspense, lazy } from "react";
+
+const GlobeScene = lazy(() => import("@/components/GlobeScene"));
 
 const floatingIcons = [
   { icon: "🏛", x: "10%", y: "20%", delay: 0 },
@@ -14,17 +16,18 @@ const floatingIcons = [
 export default function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <img src={heroBg} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-hero" />
+      {/* 3D Globe Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[hsl(215,50%,8%)] via-[hsl(215,40%,12%)] to-background">
+        <Suspense fallback={null}>
+          <GlobeScene />
+        </Suspense>
       </div>
 
       {/* Floating cultural icons */}
       {floatingIcons.map((item, i) => (
         <motion.div
           key={i}
-          className="absolute text-3xl md:text-5xl opacity-20 pointer-events-none select-none"
+          className="absolute text-3xl md:text-5xl opacity-20 pointer-events-none select-none z-10"
           style={{ left: item.x, top: item.y }}
           animate={{ y: [0, -15, 0] }}
           transition={{ duration: 3, delay: item.delay, repeat: Infinity, ease: "easeInOut" }}
@@ -91,7 +94,7 @@ export default function HeroSection() {
         >
           {[
             { icon: Globe, label: "Countries", value: "195+" },
-            { icon: BookOpen, label: "Cultures", value: "10K+" },
+            { icon: BookOpen, label: "Cultures", value: "15K+" },
             { icon: Shield, label: "Verified", value: "100%" },
           ].map((stat, i) => (
             <div key={i} className="text-center">

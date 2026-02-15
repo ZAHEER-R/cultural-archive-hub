@@ -9,6 +9,16 @@ interface Props {
   onClose: () => void;
 }
 
+function getCityImage(imageKey: string): string {
+  const images: Record<string, string> = {};
+  const modules = import.meta.glob("@/assets/*.jpg", { eager: true }) as Record<string, { default: string }>;
+  for (const path in modules) {
+    const name = path.split("/").pop()?.replace(".jpg", "") || "";
+    images[name] = modules[path].default;
+  }
+  return images[imageKey] || images["delhi"] || "";
+}
+
 export default function SearchOverlay({ open, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -23,12 +33,19 @@ export default function SearchOverlay({ open, onClose }: Props) {
     }
   }, [open]);
 
+  // Search by city name, country, culture title, category, festival name
   const suggestions = query.length > 0
     ? [
-        ...cities.filter(c => c.name.toLowerCase().includes(query.toLowerCase()) || c.country.toLowerCase().includes(query.toLowerCase())),
-        ...countries.filter(c => c.toLowerCase().includes(query.toLowerCase()) && !cities.find(city => city.country === c)).slice(0, 10).map(c => ({ name: c, country: c, id: c.toLowerCase().replace(/\s/g, "-") }))
-      ].slice(0, 12)
-    : cities;
+        ...cities.filter(c =>
+          c.name.toLowerCase().includes(query.toLowerCase()) ||
+          c.country.toLowerCase().includes(query.toLowerCase()) ||
+          c.cultures.some(cu =>
+            cu.title.toLowerCase().includes(query.toLowerCase()) ||
+            cu.category.toLowerCase().includes(query.toLowerCase())
+          )
+        ),
+      ].slice(0, 20)
+    : cities.slice(0, 24);
 
   const handleSelect = (name: string, id: string) => {
     const newHistory = [name, ...history.filter(h => h !== name)].slice(0, 10);
@@ -63,7 +80,7 @@ export default function SearchOverlay({ open, onClose }: Props) {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search cities, countries, cultures..."
+                placeholder="Search cities, festivals, cultures..."
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
               />
             </div>
@@ -100,18 +117,23 @@ export default function SearchOverlay({ open, onClose }: Props) {
                   key={item.id || i}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                  transition={{ delay: i * 0.02 }}
                   onClick={() => handleSelect(item.name, item.id)}
                   className="group text-left rounded-xl overflow-hidden bg-card border hover:shadow-gold transition-all duration-300"
                 >
                   {city ? (
                     <>
-                      <div className="aspect-[4/3] overflow-hidden">
+                      <div className="aspect-[4/3] overflow-hidden relative">
                         <img
                           src={getCityImage(city.image)}
                           alt={city.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
+                        <div className="absolute top-2 left-2">
+                          <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[10px] font-medium backdrop-blur-sm">
+                            {city.continent}
+                          </span>
+                        </div>
                       </div>
                       <div className="p-3">
                         <p className="font-heading font-semibold text-sm">{city.name}</p>
@@ -134,14 +156,4 @@ export default function SearchOverlay({ open, onClose }: Props) {
       </motion.div>
     </AnimatePresence>
   );
-}
-
-function getCityImage(imageKey: string): string {
-  const images: Record<string, string> = {};
-  const modules = import.meta.glob("@/assets/*.jpg", { eager: true }) as Record<string, { default: string }>;
-  for (const path in modules) {
-    const name = path.split("/").pop()?.replace(".jpg", "") || "";
-    images[name] = modules[path].default;
-  }
-  return images[imageKey] || images["delhi"] || "";
 }
