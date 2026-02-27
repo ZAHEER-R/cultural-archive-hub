@@ -14,6 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
+      city_photos: {
+        Row: {
+          city_id: string
+          created_at: string
+          id: string
+          photo_url: string
+          place_name: string | null
+          user_id: string
+        }
+        Insert: {
+          city_id: string
+          created_at?: string
+          id?: string
+          photo_url: string
+          place_name?: string | null
+          user_id: string
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          id?: string
+          photo_url?: string
+          place_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      experience_likes: {
+        Row: {
+          created_at: string
+          experience_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_likes_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiences: {
+        Row: {
+          city_id: string
+          created_at: string
+          id: string
+          likes: number | null
+          rating: number | null
+          text: string
+          user_id: string
+        }
+        Insert: {
+          city_id: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          rating?: number | null
+          text: string
+          user_id: string
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          rating?: number | null
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

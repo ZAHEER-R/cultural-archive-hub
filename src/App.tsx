@@ -11,6 +11,8 @@ import Profile from "./pages/Profile";
 import SettingsPage from "./pages/SettingsPage";
 import CityDetail from "./pages/CityDetail";
 import MapPage from "./pages/MapPage";
+import ResetPassword from "./pages/ResetPassword";
+import FriendsChat from "./pages/FriendsChat";
 import NotFound from "./pages/NotFound";
 import ConsentAlerts from "@/components/CookieConsent";
 import { useEffect } from "react";
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/city/:id" element={<CityDetail />} />
               <Route path="/map" element={<MapPage />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/friends" element={<FriendsChat />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

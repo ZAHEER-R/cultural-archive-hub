@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Camera, MapPin, Languages, Calendar, Edit2, Save, X } from "lucide-react";
+import { Camera, MapPin, Languages, Calendar, Edit2, Save, X, Users, Mail } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -136,10 +136,21 @@ export default function Profile() {
                 <p className="text-sm">{profile.bio || "No bio yet"}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Calendar className="w-3 h-3" />
-              <span>Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "Recently"}</span>
+            <div className="p-3 rounded-xl bg-secondary/50 border">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <Mail className="w-3.5 h-3.5" /> {user?.email}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="w-3 h-3" />
+                <span>Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "Recently"}</span>
+              </div>
             </div>
+
+            {/* Friends & Chat Link */}
+            <button onClick={() => navigate("/friends")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-accent/10 text-accent font-medium text-sm hover:bg-accent/20 transition-colors">
+              <Users className="w-4 h-4" /> Friends & Chat
+            </button>
           </div>
         </motion.div>
       </div>
