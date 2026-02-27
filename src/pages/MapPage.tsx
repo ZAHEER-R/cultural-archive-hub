@@ -1,9 +1,10 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Link } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { MapPin, Crosshair } from "lucide-react";
 import { cities, continentColors, getContinentForRegion } from "@/data/cities";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useState } from "react";
 
 // Fix default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -39,9 +40,43 @@ function getMarkerIcon(region: string): L.Icon {
   return colorMarkers[continent] || colorMarkers["Asia"];
 }
 
+// GPS Location component
+function LocateControl() {
+  const map = useMap();
+  const [locating, setLocating] = useState(false);
+
+  const handleLocate = () => {
+    setLocating(true);
+    map.locate({ setView: true, maxZoom: 13 });
+    map.once("locationfound", (e) => {
+      L.marker(e.latlng, {
+        icon: new L.Icon({
+          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+          iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+        }),
+      }).addTo(map).bindPopup("📍 You are here").openPopup();
+      L.circle(e.latlng, { radius: e.accuracy }).addTo(map);
+      setLocating(false);
+    });
+    map.once("locationerror", () => {
+      setLocating(false);
+      alert("Could not detect your location. Please enable location access.");
+    });
+  };
+
+  return (
+    <button onClick={handleLocate} disabled={locating}
+      className="absolute top-20 left-4 z-[1000] p-3 bg-card/90 backdrop-blur-sm rounded-xl border shadow-lg hover:bg-secondary transition-colors disabled:opacity-50"
+      title="Detect my location">
+      <Crosshair className={`w-5 h-5 ${locating ? "animate-spin" : ""}`} />
+    </button>
+  );
+}
+
 export default function MapPage() {
   return (
-    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] pb-16 md:pb-0">
+    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] pb-16 md:pb-0 relative">
       {/* Legend */}
       <div className="absolute top-20 right-4 z-[1000] bg-card/90 backdrop-blur-sm rounded-xl border p-3 shadow-lg">
         <p className="text-xs font-medium mb-2">Continents</p>
@@ -53,28 +88,18 @@ export default function MapPage() {
         ))}
       </div>
 
-      <MapContainer
-        center={[20, 0]}
-        zoom={2}
-        scrollWheelZoom={true}
-        className="h-full w-full rounded-none"
-        style={{ background: "hsl(215 50% 12%)" }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
+      <MapContainer center={[20, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full rounded-none" style={{ background: "hsl(215 50% 12%)" }}>
+        <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+        <LocateControl />
         {cities.map(city => (
           <Marker key={city.id} position={[city.lat, city.lng]} icon={getMarkerIcon(city.region)}>
             <Popup>
               <div className="font-body text-center min-w-[150px]">
                 <p className="font-heading font-bold text-base mb-1">{city.name}</p>
                 <p className="text-xs text-gray-500 mb-2">{city.country} | {city.cultures.length} traditions</p>
-                <Link
-                  to={`/city/${city.id}`}
-                  className="inline-block px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ background: "hsl(40 55% 55%)", color: "hsl(20 25% 10%)" }}
-                >
+                <Link to={`/city/${city.id}`} className="inline-block px-3 py-1 rounded-full text-xs font-medium"
+                  style={{ background: "hsl(40 55% 55%)", color: "hsl(20 25% 10%)" }}>
                   Explore
                 </Link>
               </div>
